@@ -2,52 +2,51 @@
 const isProd = process.env.NODE_ENV === 'production';
 
 const IMG_DOMAINS = [
-  // add any others you use
   'images.unsplash.com',
   'plus.unsplash.com',
 ];
 
+// DEVELOPMENT CSP (looser so HMR/overlay & inline dev bits work)
 const devCSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  // WebSocket + local HTTP for HMR/overlay
+  // allow WebSocket + local HTTP for HMR/overlay
   "connect-src 'self' ws: http: https:",
-  // allow external images during dev (or restrict to specific hosts)
-  `img-src 'self' data: blob: https:`,
+  // images during dev
+  "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  // inline styles are common with Tailwind in dev
+  // Tailwind/Framer often inject small inline styles in dev
   "style-src 'self' 'unsafe-inline'",
-  // HMR/overlay sometimes use inline snippets. Allow ONLY in dev.
+  // allow inline/eval/wasm-eval only in dev
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:",
-].join("; ");
+].join('; ');
 
+// PRODUCTION CSP (strict; no inline/eval; allows WASM init)
 const prodCSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  // Only your origin for API/fetch in prod; widen if you call external APIs
+  // only your origin for fetch/websocket in prod; widen if you call external APIs
   "connect-src 'self'",
-  // External images you actually use in prod:
+  // limit images to your hosts
   `img-src 'self' data: blob: https://${IMG_DOMAINS.join(' https://')}`,
   "font-src 'self' data:",
-  "style-src 'self' 'unsafe-inline'", // OK for inline styles; remove if you fully avoid inline styles
-  // No inline or eval in prod
-  "script-src 'self'",
-].join("; ");
+  // safe to allow inline styles if you rely on them (remove if you don't)
+  "style-src 'self' 'unsafe-inline'",
+  // strict: no inline/eval; allow wasm init so deps like secp256k1 can compile
+  "script-src 'self' 'wasm-unsafe-eval'",
+].join('; ');
 
 const nextConfig = {
-  // Remove eval-based source maps in dev (doesn't fully avoid eval, but helps)
+  // saner devtool to reduce eval-ish behavior in dev
   webpack: (config: { devtool: string; }, { dev }: any) => {
-    if (dev) {
-      config.devtool = 'cheap-module-source-map';
-    }
+    if (dev) config.devtool = 'cheap-module-source-map';
     return config;
   },
 
-  // Allow Next/Image to optimize remote images (optional but recommended)
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -58,16 +57,16 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: '/:path*',
         headers: [
-          { key: "Content-Security-Policy", value: isProd ? prodCSP : devCSP },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: 'Content-Security-Policy', value: isProd ? prodCSP : devCSP },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
     ];
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

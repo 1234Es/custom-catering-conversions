@@ -1291,23 +1291,6 @@ const FAQs: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* SEO: include ALL FAQs in JSON-LD even if some are collapsed */}
-        <script
-          type="application/ld+json"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'FAQPage',
-              mainEntity: faqs.map((f) => ({
-                '@type': 'Question',
-                name: f.q,
-                acceptedAnswer: { '@type': 'Answer', text: f.a },
-              })),
-            }),
-          }}
-        />
       </Container>
     </section>
   );
