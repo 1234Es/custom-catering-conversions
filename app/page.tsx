@@ -307,11 +307,22 @@ const Hero: React.FC = () => {
   const touchStartX = useRef<number | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-    intervalRef.current = window.setInterval(() => setI((n) => (n + 1) % len), 4000);
-    return () => intervalRef.current && clearInterval(intervalRef.current);
-  }, [len, prefersReducedMotion]);
+useEffect(() => {
+  if (prefersReducedMotion) return;
+
+  intervalRef.current = window.setInterval(
+    () => setI((n) => (n + 1) % len),
+    4000
+  );
+
+  return () => {
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+}, [len, prefersReducedMotion]);
+
 
   const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -486,13 +497,14 @@ const WhatWeBuild: React.FC = () => {
     },
   ];
 
-  return (
-    <Container className="section" id="services">
-  <SectionHeading 
-    eyebrow="What we build"
-    title="Conversions for every service"
-    copy="From compact coffee vans to full mobile kitchens, we tailor the build to your business."
-  />
+return (
+  <section id="services" className="section">
+    <Container>
+      <SectionHeading
+        eyebrow="What we build"
+        title="Conversions for every service"
+        copy="From compact coffee vans to full mobile kitchens, we tailor the build to your business."
+      />
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((it, i) => (
           <motion.article
@@ -503,28 +515,25 @@ const WhatWeBuild: React.FC = () => {
             transition={{ delay: i * 0.06 }}
             className="card overflow-hidden bg-white"
           >
-            {/* Image (or fallback) */}
-           {it.img ? (
-  <div className="relative aspect-[16/9] w-full bg-[var(--cc-gray)] grid place-items-center">
-    <Image
-      src={it.img}
-      alt={`${it.title} example`}
-      fill
-      className="object-contain p-2"     // ← shows full image, with a little breathing room
-      sizes="(max-width: 640px) 100vw,
-             (max-width: 1024px) 50vw,
-             33vw"
-      priority={i < 2}
-    />
-  </div>
-) : (
-  <div className="aspect-[16/9] w-full bg-[var(--cc-gray)] grid place-items-center text-[var(--cc-charcoal)]/50 text-sm">
-    Add image
-  </div>
-)}
+            {it.img ? (
+              <div className="relative aspect-[16/9] w-full bg-[var(--cc-gray)] grid place-items-center">
+                <Image
+                  src={it.img}
+                  alt={`${it.title} example`}
+                  fill
+                  className="object-contain p-2"
+                  sizes="(max-width: 640px) 100vw,
+                         (max-width: 1024px) 50vw,
+                         33vw"
+                  priority={i < 2}
+                />
+              </div>
+            ) : (
+              <div className="aspect-[16/9] w-full bg-[var(--cc-gray)] grid place-items-center text-[var(--cc-charcoal)]/50 text-sm">
+                Add image
+              </div>
+            )}
 
-
-            {/* Copy */}
             <div className="p-5">
               <h3 className="text-lg font-semibold text-[var(--cc-charcoal)]">{it.title}</h3>
               <p className="mt-2 text-sm text-[var(--cc-charcoal)]/80">{it.copy}</p>
@@ -538,8 +547,10 @@ const WhatWeBuild: React.FC = () => {
         ))}
       </div>
     </Container>
-  );
+  </section>
+);
 };
+
 
 
 const Process: React.FC = () => {
@@ -693,21 +704,24 @@ const Portfolio: React.FC = () => {
     if (lightbox) closeBtnRef.current?.focus();
   }, [lightbox]);
 
-  /* -------- drop-in text variants -------- */
-  const dropParent = {
-    hidden: {},
-    show: {
-      transition: { staggerChildren: 0.06, delayChildren: 0.05 },
-    },
-  };
-  const dropItem = {
-    hidden: { y: -12, opacity: 0 },
-    show: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.35, ease: 'easeOut' },
-    },
-  };
+/* -------- drop-in text variants -------- */
+const dropParent = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.06, delayChildren: 0.05 },
+  },
+};
+// AFTER
+const dropItem = {
+  hidden: { y: -12, opacity: 0 },
+  show: {
+    y: 0,
+    opacity: 1,
+    transition: { duration: 0.35 }, // remove `ease`
+  },
+};
+
+
 
   return (
     <section id="portfolio" className="section">
