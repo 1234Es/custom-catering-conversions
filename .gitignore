@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+"%s\n" \
+"node_modules" \
+".next" \
+".env*" \
+".DS_Store" \
+"dist" \
+"coverage" \
+".vercel" \
+"npm-debug.log*" \
+"yarn-error.log*" \
