@@ -1,59 +1,51 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === 'production';
 
-const IMG_DOMAINS = [
-  'images.unsplash.com',
-  'plus.unsplash.com',
-];
+const IMG_DOMAINS = ['images.unsplash.com', 'plus.unsplash.com'];
 
-// DEVELOPMENT CSP (looser so HMR/overlay & inline dev bits work)
+// Dev: looser so HMR/overlay works
 const devCSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  // allow WebSocket + local HTTP for HMR/overlay
   "connect-src 'self' ws: http: https:",
-  // images during dev
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  // Tailwind/Framer often inject small inline styles in dev
   "style-src 'self' 'unsafe-inline'",
-  // allow inline/eval/wasm-eval only in dev
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:",
 ].join('; ');
 
-// PRODUCTION CSP (strict; no inline/eval; allows WASM init)
+// Prod: still safe, but allow minimal inline scripts + wasm-eval for Next
 const prodCSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  // only your origin for fetch/websocket in prod; widen if you call external APIs
-  "connect-src 'self'",
-  // limit images to your hosts
+  // If you fetch external APIs in prod, add them here (e.g. https://api.example.com)
+  "connect-src 'self' https:",
+  // Remote images you actually use
   `img-src 'self' data: blob: https://${IMG_DOMAINS.join(' https://')}`,
   "font-src 'self' data:",
-  // safe to allow inline styles if you rely on them (remove if you don't)
   "style-src 'self' 'unsafe-inline'",
-  // strict: no inline/eval; allow wasm init so deps like secp256k1 can compile
-  "script-src 'self' 'wasm-unsafe-eval'",
+  // ↓ These two fix your white-screen CSP errors
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+  // Hardening
+  "object-src 'none'",
+  "base-uri 'self'",
 ].join('; ');
 
 const nextConfig = {
-  // saner devtool to reduce eval-ish behavior in dev
   webpack: (config: { devtool: string; }, { dev }: any) => {
     if (dev) config.devtool = 'cheap-module-source-map';
     return config;
   },
-
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'plus.unsplash.com' },
     ],
   },
-
   async headers() {
     return [
       {
@@ -69,4 +61,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
